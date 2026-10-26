@@ -133,6 +133,22 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.7}
 .prog-list li:first-child{border-top:0}
 .prog-list .alts{font-size:13px;color:var(--muted)}
 .rules{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.btn.big{width:100%;padding:14px;font-size:16px;border-radius:12px}
+.finish{gap:8px}
+.finish p{margin:0;font-size:14px}
+.done-head{display:flex;flex-direction:column;gap:6px}
+.done-badge{align-self:flex-start;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:var(--good-soft);color:var(--good);border-radius:8px;padding:4px 10px}
+.gains{background:var(--good-soft);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.gains b{color:var(--good)}
+.gains ul{margin:0;padding-left:18px}
+.gains span{font-family:var(--f-num);font-size:13px}
+.sum-row{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line)}
+.sum-row:first-child{border-top:0}
+.sum-main{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sum-main b{font-weight:600;font-size:14px}
+.sum-main span{font-family:var(--f-num);font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.sum-row.miss .sum-main b{color:var(--muted)}
+.draft{color:var(--warn);font-weight:600}
 @media (prefers-reduced-motion: no-preference){.card,.panel{transition:border-color .2s}}
 @media (min-width:560px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
@@ -179,7 +195,7 @@ const PROGRAM = [
 const STEP = {bar:'+2,5–5 кг', db:'+1–2 кг на гантель', mach:'+1 плитка', assist:'−1 плитка противовеса'};
 const WD = ['вс','пн','вт','ср','чт','пт','сб'];
 
-const S = {sessions:{}, tab:'log', date:todayStr(), draft:null, dirty:false, db:null, mode:'loading', confirmDel:null};
+const S = {sessions:{}, tab:'log', date:todayStr(), draft:null, dirty:false, db:null, mode:'loading', confirmDel:null, editing:false, confirmFinish:false, lastAuto:todayStr()};
 
 function todayStr(d=new Date()){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function parseD(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
@@ -215,6 +231,18 @@ function lastBw(before){const ds=sortedDates().filter(d=>d<before).reverse();for
 
 function loadDraft(){const s=S.sessions[S.date];S.draft=s?clone(s):{date:S.date,bodyweight:null,note:'',ex:{}};S.draft.ex=S.draft.ex||{}}
 function exOf(id){return S.draft.ex[id]||(S.draft.ex[id]={v:'main',sets:[]})}
+function switchDate(d){S.date=d;S.editing=false;S.confirmFinish=false;loadDraft()}
+function topSet(sets){const ws=sets.filter(s=>s.w!=null);if(!ws.length)return null;return ws.reduce((a,b)=>b.w>a.w||(b.w===a.w&&(b.r||0)>(a.r||0))?b:a)}
+function sessionStats(s){let ex=0,sets=0,ton=0;
+  for(const p of PROGRAM){const e=s.ex?.[p.id];if(!e)continue;const fs=(e.sets||[]).filter(filled);if(!fs.length)continue;ex++;sets+=fs.length;
+    if(variant(p,e.v).type!=='assist')fs.forEach(x=>{if(x.w!=null&&x.r!=null)ton+=x.w*x.r})}
+  return {ex,sets,ton:Math.round(ton)}}
+function gains(s){const out=[];
+  for(const p of PROGRAM){const e=s.ex?.[p.id];if(!e)continue;const v=variant(p,e.v);const t=topSet((e.sets||[]).filter(filled));if(!t)continue;
+    const last=lastFor(p.id,v.id,s.date);const lt=last?topSet(last.sets):null;if(!lt)continue;
+    const better=v.type==='assist'?t.w<lt.w:(t.w>lt.w||(t.w===lt.w&&(t.r||0)>(lt.r||0)));
+    if(better)out.push({name:v.name,from:lt,to:t})}
+  return out}
 
 /* ---------- сохранение ---------- */
 let saveTimer=null, writing=false, again=false;
@@ -222,7 +250,7 @@ function setSave(st,msg){const el=document.getElementById('saveState');el.classN
   el.textContent=st==='ok'?'Сохранено на телефоне':st==='pending'?'Сохраняю…':st==='err'?(msg||'Не сохранилось, проверь связь'):msg||''}
 function scheduleSave(){S.dirty=true;setSave('pending');clearTimeout(saveTimer);saveTimer=setTimeout(flush,700)}
 function cleanDraft(d){
-  const out={date:d.date,bodyweight:d.bodyweight??null,note:(d.note||'').trim(),ex:{},updatedAt:new Date().toISOString()};
+  const out={date:d.date,bodyweight:d.bodyweight??null,note:(d.note||'').trim(),ex:{},done:!!d.done,finishedAt:d.finishedAt||null,updatedAt:new Date().toISOString()};
   for(const [id,e] of Object.entries(d.ex||{})){const sets=(e.sets||[]).filter(filled).map(s=>({w:s.w??null,r:s.r??null}));
     if(sets.length||(e.v&&e.v!=='main'))out.ex[id]={v:e.v||'main',sets}}
   return out;
@@ -328,6 +356,35 @@ function renderLog(){
     <section class="panel">
       <label class="field"><span>Заметка к тренировке</span><textarea id="noteIn" placeholder="Самочувствие, что было тяжело, какой тренажер был занят">${esc(d.note||'')}</textarea></label>
       <p class="muted">После силовой: 10–15 мин ходьбы в горку, наклон 8–12%, 5–6 км/ч.</p>
+    </section>
+    <section class="panel finish" id="finishBox">
+      ${S.confirmFinish?`<p>Заполнено упражнений: ${doneN} из ${PROGRAM.length}. Завершить тренировку так?</p>
+        <div class="c-actions"><button class="btn primary" data-act="finishYes">Да, завершить</button><button class="btn" data-act="finishNo">Вернуться к записи</button></div>`
+      :`<button class="btn primary big" data-act="finish">${d.done?'Сохранить изменения':'Завершить тренировку'}</button>
+        <p class="muted" id="finishMsg">${d.done?'Изменения сохраняются сразу, кнопка вернет к итогу тренировки.':'Записи сохраняются по ходу. Кнопка зафиксирует тренировку и защитит ее от случайной очистки.'}</p>`}
+    </section>`;
+}
+function renderSummary(){
+  const d=S.draft;const st=sessionStats(d);const g=gains(d);const {cyc,ph}=weekInfo(S.date);
+  const rows=PROGRAM.map(p=>{const e=d.ex[p.id];const fs=(e?.sets||[]).filter(filled);const v=variant(p,e?.v);
+    return `<div class="sum-row${fs.length?'':' miss'}"><span class="num">${p.num}</span><div class="sum-main"><b>${esc(v.name)}</b><span>${fs.length?fs.map(s=>fmt(s.w)+'×'+(s.r??'?')).join(' · '):'не выполнено'}</span></div></div>`}).join('');
+  return `<section class="day" aria-label="День тренировки">
+      <label class="field"><span>Дата · ${wd(S.date)}</span><input type="date" id="dateIn" value="${S.date}"></label>
+      <div class="phase ${ph.cls}"><b>Неделя ${cyc} из 8</b> · ${ph.name}</div>
+    </section>
+    <section class="panel">
+      <div class="done-head"><span class="done-badge">Тренировка завершена</span><h2>${dmy(S.date)} · ${wd(S.date)}</h2></div>
+      <div class="stats">
+        <div class="stat"><span>Упражнений</span><b>${st.ex}/${PROGRAM.length}</b></div>
+        <div class="stat"><span>Подходов</span><b>${st.sets}</b></div>
+        <div class="stat"><span>Тоннаж</span><b>${st.ton.toLocaleString('ru-RU')}</b><small>кг поднято за тренировку</small></div>
+        <div class="stat"><span>Вес тела</span><b>${d.bodyweight!=null?fmt(d.bodyweight):'—'}</b><small>кг</small></div>
+      </div>
+      ${g.length?`<div class="gains"><b>Рост к прошлому разу</b><ul>${g.map(x=>`<li>${esc(x.name)}: <span>${fmt(x.from.w)}×${x.from.r??'?'} → ${fmt(x.to.w)}×${x.to.r??'?'}</span></li>`).join('')}</ul></div>`:''}
+      <div>${rows}</div>
+      ${d.note?`<p class="muted">Заметка: ${esc(d.note)}</p>`:''}
+      <div class="c-actions"><button class="btn primary" data-act="toProg">Открыть прогресс</button><button class="btn" data-act="edit">Изменить запись</button></div>
+      <p class="muted">Следующая тренировка начнется с пустой формы, когда откроешь дневник в другой день. Чтобы записать прошлую тренировку, поменяй дату вверху.</p>
     </section>`;
 }
 
@@ -357,7 +414,7 @@ function renderProg(){
       <div class="chart">${spark(vals)}</div></div>`}).join('');
   const hist=[...ds].reverse().map(d=>{const s=S.sessions[d];const n=Object.values(s.ex||{}).filter(e=>(e.sets||[]).some(filled)).length;
     const conf=S.confirmDel===d;
-    return `<div class="h-row"><div class="h-main"><b>${dmy(d)} · ${wd(d)}</b><span>${n} упр.${s.bodyweight!=null?' · вес '+fmt(s.bodyweight)+' кг':''}${s.note?' · '+esc(s.note):''}</span></div>
+    return `<div class="h-row"><div class="h-main"><b>${dmy(d)} · ${wd(d)}</b><span>${s.done?'':'<span class="draft">не завершена</span> · '}${n} упр.${s.bodyweight!=null?' · вес '+fmt(s.bodyweight)+' кг':''}${s.note?' · '+esc(s.note):''}</span></div>
       <div class="h-acts">${conf?`<button class="btn" data-act="cancelDel">Отмена</button><button class="btn danger solid" data-act="doDel" data-d="${d}">Удалить запись</button>`
       :`<button class="btn" data-act="open" data-d="${d}">Открыть</button><button class="btn danger" data-act="askDel" data-d="${d}">Удалить</button>`}</div></div>`}).join('');
   return `${backupNudge()}${stats}
@@ -388,7 +445,7 @@ function render(){
   document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===S.tab)));
   if(S.mode==='loading'){view.innerHTML=`<div class="panel"><div class="empty"><b>Загружаю дневник</b>Секунду…</div></div>`;return}
   if(!S.draft)loadDraft();
-  view.innerHTML=S.tab==='log'?renderLog():S.tab==='prog'?renderProg():renderPlan();
+  view.innerHTML=S.tab==='log'?(S.draft.done&&!S.editing?renderSummary():renderLog()):S.tab==='prog'?renderProg():renderPlan();
 }
 function editingNow(){const a=document.activeElement;return a&&view.contains(a)&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA')}
 function updateDoneLine(){const el=document.getElementById('doneLine');if(!el)return;const {cyc}=weekInfo(S.date);
@@ -405,7 +462,11 @@ view.addEventListener('input',e=>{const t=e.target;
     ex.sets[i][t.dataset.k]=num(t.value);scheduleSave();updateDoneLine();
     const card=t.closest('.card');if(card){const p=PROGRAM.find(x=>x.id===t.dataset.ex);card.classList.toggle('done',ex.sets.filter(filled).length>=planSets(p,weekInfo(S.date).cyc))}}
 });
-view.addEventListener('change',async e=>{if(e.target.id==='dateIn'&&e.target.value){if(S.dirty)await flush();S.date=e.target.value;loadDraft();render()}});
+view.addEventListener('change',async e=>{if(e.target.id==='dateIn'&&e.target.value){if(S.dirty)await flush();switchDate(e.target.value);render()}});
+async function doFinish(){S.draft.done=true;S.draft.finishedAt=S.draft.finishedAt||new Date().toISOString();S.editing=false;S.confirmFinish=false;
+  S.dirty=true;await flush();render();window.scrollTo({top:0})}
+document.addEventListener('visibilitychange',async()=>{if(document.visibilityState!=='visible'||S.mode==='loading')return;const t=todayStr();
+  if(S.date<t&&S.date===S.lastAuto&&!S.editing&&!editingNow()){if(S.dirty)await flush();switchDate(t);S.lastAuto=t;render()}});
 view.addEventListener('click',async e=>{const b=e.target.closest('button[data-act]');if(!b)return;const act=b.dataset.act;
   if(act==='variant'){const ex=exOf(b.dataset.ex);if(ex.v===b.dataset.v)return;ex.v=b.dataset.v;if(!ex.sets.some(filled))ex.sets=[];scheduleSave();render();return}
   if(act==='addset'){const ex=exOf(b.dataset.ex);const p=PROGRAM.find(x=>x.id===b.dataset.ex);const rows=Math.max(planSets(p,weekInfo(S.date).cyc),ex.sets.length);
@@ -413,8 +474,17 @@ view.addEventListener('click',async e=>{const b=e.target.closest('button[data-ac
   if(act==='delset'){const ex=exOf(b.dataset.ex);ex.sets.pop();scheduleSave();render();return}
   if(act==='copy'){const ex=exOf(b.dataset.ex);const last=lastFor(b.dataset.ex,ex.v||'main',S.date);if(!last)return;
     last.sets.forEach((s,i)=>{while(ex.sets.length<=i)ex.sets.push({w:null,r:null});if(ex.sets[i].w==null)ex.sets[i].w=s.w});scheduleSave();render();return}
+  if(act==='finish'){const any=Object.values(S.draft.ex).some(e=>(e.sets||[]).some(filled));
+    if(!any){const m=document.getElementById('finishMsg');if(m)m.textContent='Впиши хотя бы один подход, потом завершай.';return}
+    const {cyc}=weekInfo(S.date);const n=PROGRAM.filter(p=>(S.draft.ex[p.id]?.sets||[]).filter(filled).length>=planSets(p,cyc)).length;
+    if(n<PROGRAM.length&&!S.draft.done){S.confirmFinish=true;render();document.getElementById('finishBox')?.scrollIntoView({block:'center'});return}
+    doFinish();return}
+  if(act==='finishYes'){doFinish();return}
+  if(act==='finishNo'){S.confirmFinish=false;render();document.getElementById('finishBox')?.scrollIntoView({block:'center'});return}
+  if(act==='edit'){S.editing=true;render();return}
+  if(act==='toProg'){S.tab='prog';render();window.scrollTo({top:0});return}
   if(act==='export'){exportData();return}
-  if(act==='open'){if(S.dirty)await flush();S.date=b.dataset.d;loadDraft();S.tab='log';render();window.scrollTo({top:0});return}
+  if(act==='open'){if(S.dirty)await flush();switchDate(b.dataset.d);S.tab='log';render();window.scrollTo({top:0});return}
   if(act==='askDel'){S.confirmDel=b.dataset.d;render();return}
   if(act==='cancelDel'){S.confirmDel=null;render();return}
   if(act==='doDel'){const d=b.dataset.d;try{if(S.mode==='db')await S.db.collection('sessions').doc(d).delete();delete S.sessions[d];if(S.mode!=='db')saveLocal();
