@@ -5,10 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Фулбади">
-<meta name="theme-color" content="#EDF0F3" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0E1319" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#000000">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -19,23 +18,14 @@
 <style>
 /* Layout: одна узкая колонка под телефон, липкие вкладки, карточка на каждое упражнение в порядке выполнения */
 :root{
-  --bg:#EDF0F3; --surface:#FFFFFF; --surface-2:#F5F7F9; --ink:#121A22; --muted:#5A6774; --line:#D4DBE2;
-  --accent:#2457C5; --accent-ink:#FFFFFF; --accent-soft:#E2EAFA;
-  --good:#1D8048; --good-soft:#DFF2E6; --warn:#9A6414; --warn-soft:#FBEFD9; --danger:#BE3329; --danger-soft:#FBE4E1;
+  color-scheme:dark;
+  --bg:#000000; --surface:#000000; --surface-2:#000000; --ink:#FF0000; --muted:#FF0000; --line:#660000;
+  --accent:#FF0000; --accent-ink:#FF0000; --accent-soft:#000000;
+  --good:#FF0000; --good-soft:#000000; --warn:#FF0000; --warn-soft:#000000; --danger:#FF0000; --danger-soft:#000000;
   --f-display:"Oswald","Arial Narrow",Arial,sans-serif;
   --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-num:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0E1319; --surface:#161D25; --surface-2:#1C242E; --ink:#E7ECF1; --muted:#94A1AE; --line:#29333F;
-  --accent:#7099FF; --accent-ink:#0A1222; --accent-soft:#1B2944;
-  --good:#52C487; --good-soft:#143021; --warn:#E3B152; --warn-soft:#33280F; --danger:#F07169; --danger-soft:#3A1A18;
-  color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0E1319; --surface:#161D25; --surface-2:#1C242E; --ink:#E7ECF1; --muted:#94A1AE; --line:#29333F;
-  --accent:#7099FF; --accent-ink:#0A1222; --accent-soft:#1B2944;
-  --good:#52C487; --good-soft:#143021; --warn:#E3B152; --warn-soft:#33280F; --danger:#F07169; --danger-soft:#3A1A18;
-  color-scheme:dark}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-tap-highlight-color:transparent;min-height:100vh}
@@ -52,7 +42,7 @@ h2{font-family:var(--f-display);font-weight:500;font-size:19px;margin:0;letter-s
 .save.ok::before{background:var(--good)} .save.pending::before{background:var(--warn)} .save.err{color:var(--danger)} .save.err::before{background:var(--danger)}
 .tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:6px 0}
 .tabs button{font:600 14px var(--f-body);color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 6px;cursor:pointer}
-.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);border-color:var(--ink)}
 button{font-family:var(--f-body)}
 button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .notice{font-size:13px;background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px}
@@ -76,14 +66,14 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.7}
 .ss-label b{color:var(--ink);font-weight:600}
 .c-head{display:flex;gap:10px;align-items:flex-start}
 .num{font:600 15px var(--f-display);min-width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--line);flex:none}
-.base .num{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.base .num{background:var(--surface);color:var(--ink);border-color:var(--ink)}
 .c-title{display:flex;flex-direction:column;gap:2px;min-width:0}
 .c-title strong{font-weight:600;font-size:16px;line-height:1.25}
 .c-meta{font-size:13px;color:var(--muted)}
 .c-meta .tgt{font-family:var(--f-num);color:var(--ink);font-weight:600}
 .variants{display:flex;flex-wrap:wrap;gap:6px}
 .variants button{font-size:13px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:999px;padding:6px 11px;cursor:pointer;text-align:left}
-.variants button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.variants button[aria-pressed="true"]{background:var(--surface);color:var(--accent-ink);border-color:var(--accent)}
 .variants .lbl{font-size:11px;color:var(--muted);align-self:center;margin-right:2px}
 .chip{align-self:flex-start;font-size:13px;font-weight:600;border-radius:8px;padding:5px 10px;background:var(--surface-2);color:var(--muted)}
 .chip.up{background:var(--good-soft);color:var(--good)} .chip.deload{background:var(--warn-soft);color:var(--warn)}
@@ -96,9 +86,9 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.7}
 .set.extra .n{color:var(--accent)}
 .c-actions{display:flex;flex-wrap:wrap;gap:6px}
 .btn{font-size:13px;font-weight:600;border-radius:9px;padding:8px 12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
-.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary{background:var(--surface);color:var(--accent-ink);border-color:var(--accent)}
 .btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,var(--line))}
-.btn.danger.solid{background:var(--danger);color:var(--surface);border-color:var(--danger)}
+.btn.danger.solid{background:var(--surface);color:var(--danger);border-color:var(--danger)}
 .last{font-size:13px;color:var(--muted);margin:0}
 .last b{font-family:var(--f-num);font-weight:500;color:var(--ink)}
 .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -425,7 +415,7 @@ function renderProg(){
 
 /* ---------- экран: программа ---------- */
 function renderPlan(){
-  return `<section class="panel"><h2>Тренировка</h2><ul class="prog-list">${PROGRAM.map(ex=>`<li><span class="num" style="${ex.base?'background:var(--ink);color:var(--bg);border-color:var(--ink)':''}">${ex.num}</span>
+  return `<section class="panel"><h2>Тренировка</h2><ul class="prog-list">${PROGRAM.map(ex=>`<li><span class="num" style="${ex.base?'background:var(--surface);color:var(--ink);border-color:var(--ink)':''}">${ex.num}</span>
     <div><div><strong>${ex.name}</strong> · <span style="font-family:var(--f-num)">${ex.sets}×${ex.reps[0]}–${ex.reps[1]}</span></div>
     <div class="alts">Замена: ${ex.alts.map(a=>a.name).join(' или ')}</div><div class="alts">${ex.muscle} · отдых ${ex.rest}</div></div></li>`).join('')}</ul></section>
   <section class="panel"><h2>Правила</h2><ul class="rules">
