@@ -1,4 +1,4 @@
-const V = 'fullbody-v3-black-red';
+const V = 'fullbody-v5-two-days';
 const FONTS = 'fullbody-fonts';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
