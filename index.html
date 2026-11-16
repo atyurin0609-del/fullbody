@@ -53,8 +53,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 input,textarea{font:500 16px var(--f-num);color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:9px 10px;width:100%;min-width:0}
 textarea{font-family:var(--f-body);font-size:15px;resize:vertical;min-height:64px}
 input::placeholder,textarea::placeholder{color:var(--muted);opacity:.7}
-.daysel{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.daysel button{display:flex;flex-direction:column;gap:2px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:10px;padding:9px 12px;cursor:pointer}
+.daysel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.daysel button{display:flex;flex-direction:column;gap:2px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:10px;padding:8px 9px;cursor:pointer}
 .daysel button b{font-family:var(--f-display);font-weight:500;font-size:15px;letter-spacing:.02em;text-transform:uppercase}
 .daysel button span{font-size:11px;color:var(--muted)}
 .daysel button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
@@ -174,7 +174,7 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.7}
 <div class="app">
   <header class="top">
     <div>
-      <div class="eyebrow">Фулбади · 2 дня в чередовании · 8-недельный цикл</div>
+      <div class="eyebrow">Фулбади · 3 дня в чередовании · 8-недельный цикл</div>
       <h1>Дневник тренировок</h1>
     </div>
     <span id="saveState" class="save" aria-live="polite">Загрузка…</span>

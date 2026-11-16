@@ -1,5 +1,5 @@
 const GOAL = 90;
-/* Два тренировочных дня в чередовании. К каждому упражнению — запасные варианты, если основной тренажер занят. */
+/* Три тренировочных дня в чередовании. К каждому упражнению — запасные варианты, если основной тренажер занят. */
 const DAYS = [
   {id:'A', name:'День 1', sub:'Присед · жим под наклоном · руки', ex:[
     {id:'squat',num:'1',name:'Присед со штангой',muscle:'Ноги, ягодицы',sets:3,reps:[6,8],rest:'2–3 мин',restSec:150,type:'bar',base:true,
@@ -28,6 +28,20 @@ const DAYS = [
      alts:[{id:'cablehammer',name:'Молотки на нижнем блоке',type:'mach'},{id:'scott',name:'Сгибание на скамье Скотта',type:'mach'}]},
     {id:'ropepush',num:'6',name:'Разгибание рук с канатом',muscle:'Трицепс',sets:2,reps:[10,15],rest:'90 с',restSec:90,type:'mach',
      alts:[{id:'barpushdown',name:'Разгибание с прямой рукоятью',type:'mach'},{id:'ohpush',name:'Разгибание из-за головы на блоке',type:'mach'}]},
+  ]},
+  {id:'C', name:'День 3', sub:'Тяга в наклоне · жим ногами · руки', ex:[
+    {id:'bbrow',num:'1',name:'Тяга штанги к поясу в наклоне',muscle:'Спина, широчайшие',sets:3,reps:[8,10],rest:'2 мин',restSec:120,type:'bar',base:true,
+     alts:[{id:'dbrowC',name:'Тяга гантели одной рукой',type:'db'},{id:'smithrow',name:'Тяга в Смите в наклоне',type:'bar'}]},
+    {id:'legpressC',num:'2',name:'Жим ногами лежа',muscle:'Ноги, ягодицы',sets:3,reps:[10,12],rest:'2 мин',restSec:120,type:'mach',base:true,
+     alts:[{id:'hackC',name:'Гакк-присед',type:'mach'},{id:'smithsquat',name:'Присед в Смите',type:'bar'}]},
+    {id:'seatedrow',num:'3',name:'Тяга рукояти сидя',muscle:'Середина спины',sets:3,reps:[10,12],rest:'90 с',restSec:90,type:'mach',
+     alts:[{id:'hammerrowC',name:'Тяга в рычажном тренажере с упором',type:'mach'},{id:'pulldownC',name:'Тяга верхнего блока',type:'mach'}]},
+    {id:'machchest',num:'4',name:'Жим от груди в тренажере',muscle:'Грудь, трицепс',sets:3,reps:[10,12],rest:'90 с',restSec:90,type:'mach',
+     alts:[{id:'dbbenchC',name:'Жим гантелей лежа',type:'db'},{id:'hammerchestC',name:'Жим от груди в хаммере',type:'mach'}]},
+    {id:'scottcurl',num:'5',name:'Сгибания на скамье Скотта',muscle:'Бицепс',sets:2,reps:[10,12],rest:'90 с',restSec:90,type:'bar',
+     alts:[{id:'dbcurlC',name:'Сгибание с гантелями',type:'db'},{id:'machcurlC',name:'Сгибание рук в тренажере',type:'mach'}]},
+    {id:'frenchC',num:'6',name:'Французский жим',muscle:'Трицепс',sets:2,reps:[10,12],rest:'90 с',restSec:90,type:'bar',
+     alts:[{id:'ohextC',name:'Разгибание из-за головы на блоке',type:'mach'},{id:'ropepushC',name:'Разгибание рук с канатом',type:'mach'}]},
   ]},
 ];
 const STEP = {bar:'+2,5–5 кг', db:'+1–2 кг на гантель', mach:'+1 плитка', assist:'−1 плитка противовеса'};
@@ -60,7 +74,7 @@ function dayOf(s){if(s&&s.day&&DAYS.some(d=>d.id===s.day))return dayById(s.day);
   return best}
 function curDay(){return dayOf(S.draft)}
 function nextDay(){const ds=sortedDates();if(!ds.length)return DAYS[0];
-  return dayOf(S.sessions[ds[ds.length-1]]).id==='A'?DAYS[1]:DAYS[0]}
+  const i=DAYS.findIndex(d=>d.id===dayOf(S.sessions[ds[ds.length-1]]).id);return DAYS[(i+1)%DAYS.length]}
 
 function weekInfo(date){
   const ds=sortedDates(); const first=ds.length&&ds[0]<date?ds[0]:date;

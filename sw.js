@@ -1,4 +1,4 @@
-const V = 'fullbody-v6-split';
+const V = 'fullbody-v7-day3';
 const FONTS = 'fullbody-fonts';
 const CORE = ['./', './index.html', './app1.js', './app2.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
